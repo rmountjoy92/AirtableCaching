@@ -29,7 +29,10 @@ class Base:
 
         # get json folder path
         curr_folder = os.path.dirname(__file__)
-        self.json_folder = os.path.join(curr_folder, "json", self.name)
+        main_json_folder = os.path.join(curr_folder, "json")
+        if not os.path.isdir(main_json_folder):
+            os.mkdir(main_json_folder)
+        self.json_folder = os.path.join(main_json_folder, self.name)
         if not os.path.isdir(self.json_folder):
             os.mkdir(self.json_folder)
 
