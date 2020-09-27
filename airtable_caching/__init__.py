@@ -17,22 +17,32 @@ from airtable import Airtable
 ██║     ██╔══██║██║     ██╔══██║██║██║╚██╗██║██║   ██║
 ╚██████╗██║  ██║╚██████╗██║  ██║██║██║ ╚████║╚██████╔╝
  ╚═════╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝ 
-Author: Ross Mountjoy                                             
+Author: Ross Mountjoy (https://github.com/rmountjoy92)
+Contributors: 
+Thomas Huxley (https://github.com/bawpcwpn)                                     
 """
 
 
 class Base:
-    def __init__(self, name, key, api_key):
-        self.name = name
-        self.key = key
+    def __init__(self, base_id, api_key, json_folder=None):
+        """
+        The base class is responsible for caching tables
+        :param base_id:
+        :param api_key:
+        :param json_folder:
+        """
+        self.base_id = base_id
         self.api_key = api_key
 
         # get json folder path
-        curr_folder = os.path.dirname(__file__)
-        main_json_folder = os.path.join(curr_folder, "json")
+        if json_folder is None:
+            curr_folder = os.path.dirname(__file__)
+            main_json_folder = os.path.join(curr_folder, "json")
+        else:
+            main_json_folder = os.path.abspath(json_folder)
         if not os.path.isdir(main_json_folder):
             os.mkdir(main_json_folder)
-        self.json_folder = os.path.join(main_json_folder, self.name)
+        self.json_folder = os.path.join(main_json_folder, self.base_id)
         if not os.path.isdir(self.json_folder):
             os.mkdir(self.json_folder)
 
@@ -43,7 +53,7 @@ class Base:
         :param kwargs:
         :return:
         """
-        airtable = Airtable(self.key, table_name, self.api_key)
+        airtable = Airtable(self.base_id, table_name, self.api_key)
         at_json = {"list": airtable.get_all(**kwargs)}
         json_path = os.path.join(self.json_folder, f"{table_name}.json")
         if os.path.isfile(json_path):
@@ -61,14 +71,24 @@ class Base:
 
 
 class Table:
-    def __init__(self, base, table_name):
-        self.base = base
+    def __init__(self, base_id, table_name, json_folder=None):
+        """
+        The table class is what you use to query the cached data.
+        :param base_id:
+        :param table_name:
+        :param json_folder:
+        """
+        self.base_id = base_id
         self.table_name = table_name
         self.list = None
 
         # get json folder path
-        curr_folder = os.path.dirname(__file__)
-        self.json_folder = os.path.join(curr_folder, "json")
+        if json_folder is None:
+            curr_folder = os.path.dirname(__file__)
+            main_json_folder = os.path.join(curr_folder, "json")
+        else:
+            main_json_folder = os.path.abspath(json_folder)
+        self.json_folder = os.path.join(main_json_folder, self.base_id)
 
     def get(self, rec_id, resolve_fields=None):
         """
@@ -159,7 +179,7 @@ class Table:
 
     def __get_dict_list_from_json_file(self):
         with open(
-            os.path.join(self.base.json_folder, f"{self.table_name}.json"), "r"
+            os.path.join(self.json_folder, f"{self.table_name}.json"), "r"
         ) as json_file:
             table_dict = json.load(json_file)
         self.list = table_dict["list"]
@@ -170,6 +190,6 @@ class Table:
                 full_rec_list = []
                 if rec["fields"].get(rel_field, None):
                     for related_rec in rec["fields"][rel_field]:
-                        d = Table(base=self.base, table_name=self.table_name)
+                        d = Table(base_id=self.base_id, table_name=table_name)
                         full_rec_list.append(d.get(related_rec))
                     rec["fields"][rel_field] = full_rec_list
