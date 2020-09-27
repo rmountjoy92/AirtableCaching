@@ -7,6 +7,11 @@ Utility for caching api responses from the airtable-python-wrapper and provides 
 
 >Dummy api key and base keys provided below for testing. Please do not modify anything using this key, or I will have to take this option away.
 
+## Installation
+```bash
+pip install airtable-caching
+```
+
 ## Step 1 - Import classes
 ```python
 from airtable_caching import Base, Table
@@ -65,12 +70,16 @@ table = Table(
 ```
 
 ## Changelog
+### 0.0.4
+#### Updated
+- README and docstrings
+
 ### 0.0.3
 #### Changed
 - (BREAKING) Base and Table classes no longer use base name, now they use base id (see docs)
 - added option for supplying custom cache location
 
-### Added
+#### Added
 - Documentation
 - Tests
     

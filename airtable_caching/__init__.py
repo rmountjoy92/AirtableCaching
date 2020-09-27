@@ -26,11 +26,17 @@ Thomas Huxley (https://github.com/bawpcwpn)
 class Base:
     def __init__(self, base_id, api_key, json_folder=None):
         """
-        The base class is responsible for caching tables
-        :param base_id:
-        :param api_key:
-        :param json_folder:
+        The base class is responsible for caching tables and clearing the cache.
+
+        :param base_id: (str) The base key found in the API documentation
+        for the base in Airtable.
+
+        :param api_key: (str) Your Airtable user's API Key from
+        your account page in Airtable.
+
+        :param json_folder: (path) Path location for caching the .json files.
         """
+
         self.base_id = base_id
         self.api_key = api_key
 
@@ -48,11 +54,16 @@ class Base:
 
     def cache_table(self, table_name, **kwargs):
         """
-        save table using airtable-python-wrapper's get_all function as a json file
-        :param table_name:
-        :param kwargs:
-        :return:
+        Save table using airtable-python-wrapper's get_all function as a json file.
+
+        :param table_name: (str) The name of the table to cache, case-sensitive.
+
+        :param kwargs: (kwargs) Keyword arguments to pass to the get_all function, see
+        https://airtable-python-wrapper.readthedocs.io/en/master/api.html#airtable.Airtable.get_all
+
+        :return None:
         """
+
         airtable = Airtable(self.base_id, table_name, self.api_key)
         at_json = {"list": airtable.get_all(**kwargs)}
         json_path = os.path.join(self.json_folder, f"{table_name}.json")
@@ -63,8 +74,9 @@ class Base:
 
     def clear_cache(self):
         """
-        delete all json files out of this base's json folder
-        :return:
+        Delete all json files out of this base's json folder.
+
+        :return None:
         """
         rmtree(self.json_folder)
         os.mkdir(self.json_folder)
@@ -74,10 +86,15 @@ class Table:
     def __init__(self, base_id, table_name, json_folder=None):
         """
         The table class is what you use to query the cached data.
-        :param base_id:
-        :param table_name:
-        :param json_folder:
+
+        :param base_id: (str) The base key found in the API documentation
+        for the base in Airtable.
+
+        :param table_name: (str) The name of the table to access, case-sensitive.
+
+        :param json_folder: (path) Path location for caching the .json files.
         """
+
         self.base_id = base_id
         self.table_name = table_name
         self.list = None
@@ -92,12 +109,17 @@ class Table:
 
     def get(self, rec_id, resolve_fields=None):
         """
-        reads json file for given record id, optionally resolves relationships,
-        then returns the record as a dict
-        :param rec_id:
-        :param resolve_fields:
-        :return:
+        Get the data for the given record ID from cached .json as a dict.
+        Optionally resolve linked records.
+
+        :param rec_id: (str) The Airtable record ID for the record to access
+
+        :param resolve_fields: (dict) The linked records fields to resolve,
+        using {<Table Name>: <Linked Field Name>}
+
+        :return dict:
         """
+
         self.__get_dict_list_from_json_file()
         if resolve_fields:
             self.__resolve_relationships(resolve_fields)
@@ -108,11 +130,16 @@ class Table:
 
     def query(self, resolve_fields=None):
         """
-        reads json file for all records, optionally resolves relationships,
-        then sets self.list as a list of dicts.
-        :param resolve_fields:
-        :return:
+        Get the data for all records from cached .json
+        Optionally resolve linked records.
+        Then sets self.list as a list of dicts.
+
+        :param resolve_fields: (dict) The linked records fields to resolve,
+        using {<Table Name>: <Linked Field Name>}
+
+        :return self: Table Class Object
         """
+
         self.__get_dict_list_from_json_file()
         if resolve_fields:
             self.__resolve_relationships(resolve_fields)
@@ -122,10 +149,14 @@ class Table:
 
     def filter_by(self, fields):
         """
-        filters self.list by a given dict of {<field>:<value>}
-        :param fields:
-        :return:
+        Filters self.list by field/value pairs.
+
+        :param fields: (dict) field/value pairs in which to filter self.list,
+        using {<field>:<value>}
+
+        :return self: Table Class Object
         """
+
         for field, value in fields.items():
             self.list = [rec for rec in self.list if rec["fields"].get(field) == value]
         if len(self.list) < 1:
@@ -134,11 +165,15 @@ class Table:
 
     def order_by(self, field, desc=False):
         """
-        orders self.list by the given field, set desc to order descending
-        :param field:
-        :param desc:
-        :return:
+        Orders self.list by the given field.
+
+        :param field: (str) The field name to sort by.
+
+        :param desc: (bool) If True, orders self.list descending.
+
+        :return self: Table Class Object
         """
+
         try:
             self.list = sorted(self.list, key=lambda i: i["fields"].get(field, None))
         except TypeError:
@@ -154,15 +189,17 @@ class Table:
 
     def all(self):
         """
-        returns all of self.list
-        :return:
+        Returns all of self.list
+
+        :return list:
         """
         return self.list
 
     def first(self):
         """
-        returns the first record in self.list
-        :return:
+        Returns the first record in self.list
+
+        :return dict:
         """
         if len(self.list) < 1:
             return None
@@ -170,14 +207,19 @@ class Table:
 
     def last(self):
         """
-        returns the last record in self.list
-        :return:
+        Returns the last record in self.list
+
+        :return dict:
         """
         if len(self.list) < 1:
             return None
         return self.list[-1]
 
     def __get_dict_list_from_json_file(self):
+        """
+        Private method that converts the configured .json into a list of dicts
+        :return None:
+        """
         with open(
             os.path.join(self.json_folder, f"{self.table_name}.json"), "r"
         ) as json_file:
@@ -185,6 +227,14 @@ class Table:
         self.list = table_dict["list"]
 
     def __resolve_relationships(self, resolve_fields):
+        """
+        Private method that replaces linked record ID's with the full record.
+
+        :param resolve_fields: (dict) The linked records fields to resolve,
+        using {<Table Name>: <Linked Field Name>}
+
+        :return None:
+        """
         for table_name, rel_field in resolve_fields.items():
             for rec in self.list:
                 full_rec_list = []
