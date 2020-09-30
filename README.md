@@ -65,7 +65,7 @@ base = Base(
 table = Table(
     base_id="appjMwyFviPaM9I0L",
     table_name="Table 1",
-    json_folder=self.custom_json_folder,
+    json_folder=custom_json_folder,
 )
 ```
 
