@@ -70,6 +70,10 @@ table = Table(
 ```
 
 ## Changelog
+### 0.0.5
+#### Bug fix
+- Fixed bug causing json decoder error if table is accessed while being cached.
+
 ### 0.0.4
 #### Updated
 - README and docstrings

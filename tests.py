@@ -2,6 +2,8 @@ import os
 import unittest
 from pathlib import Path
 from shutil import rmtree
+from time import sleep
+from threading import Thread
 from airtable_caching import Base, Table
 
 
@@ -114,3 +116,26 @@ class Tests(unittest.TestCase):
     def test_last(self):
         query = self.table1.query()
         self.assertTrue(query.list[-1] == query.last())
+
+
+class TestThreaded(unittest.TestCase):
+    def test_threaded(self):
+        self.base = Base(base_id="appjMwyFviPaM9I0L", api_key="keyqhxncgPbSySJQN")
+        proc = Thread(target=self.cache_table(), daemon=True)
+        proc.start()
+        table1 = Table(base_id="appjMwyFviPaM9I0L", table_name="Table 1")
+        table1.get("rec4trz5QrB6aWJBw")
+        table1.get("rec4trz5QrB6aWJBw")
+        table1.get("rec4trz5QrB6aWJBw")
+        table1.get("rec4trz5QrB6aWJBw")
+        table1.get("rec4trz5QrB6aWJBw")
+        sleep(1)
+        table1.get("rec4trz5QrB6aWJBw")
+        table1.get("rec4trz5QrB6aWJBw")
+        table1.get("rec4trz5QrB6aWJBw")
+        table1.get("rec4trz5QrB6aWJBw")
+        table1.get("rec4trz5QrB6aWJBw")
+
+    def cache_table(self):
+        self.base.cache_table("Table 1")
+        sleep(1)

@@ -67,8 +67,6 @@ class Base:
         airtable = Airtable(self.base_id, table_name, self.api_key)
         at_json = {"list": airtable.get_all(**kwargs)}
         json_path = os.path.join(self.json_folder, f"{table_name}.json")
-        if os.path.isfile(json_path):
-            os.remove(json_path)
         with open(json_path, "w") as new_file:
             json.dump(at_json, new_file)
 
@@ -220,11 +218,17 @@ class Table:
         Private method that converts the configured .json into a list of dicts
         :return None:
         """
-        with open(
-            os.path.join(self.json_folder, f"{self.table_name}.json"), "r"
-        ) as json_file:
-            table_dict = json.load(json_file)
-        self.list = table_dict["list"]
+        while True:
+            try:
+                with open(
+                    os.path.join(self.json_folder, f"{self.table_name}.json"), "r"
+                ) as json_file:
+                    table_dict = json.load(json_file)
+                self.list = table_dict["list"]
+                break
+            except json.decoder.JSONDecodeError:
+                print("Attempted to read and cache at the same time, trying again.")
+                continue
 
     def __resolve_relationships(self, resolve_fields):
         """
